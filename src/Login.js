@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import user from './User'
 
 class Login extends React.Component {
   constructor() {
@@ -8,21 +9,11 @@ class Login extends React.Component {
     this.state = {user: ''};
   }; 
 
-  createUser(e){
-    this.setState({
-      user: e.target.value
-    });
-  };
-
-  handleSubmit(){
-
-  }
-
   render() {
     return(
       <div>
         <div className="login">
-          <form action="/chat" className="chart" onSubmit={this.handleSubmit.bind(this)}>
+          <form className="chart" onSubmit={this.handleSubmit.bind(this)}>
             <h3>¿Cuál es tu nombre?</h3>
             <input type="text" className= "inputlogin" value={this.state.user} onChange={this.createUser.bind(this)}/>
             <button type="submit">Login</button>
@@ -32,8 +23,17 @@ class Login extends React.Component {
     );
   };
 
+  createUser(e){
+    this.setState({
+      user: e.target.value
+    });
+  };
+
+  handleSubmit(){
+    user.name = this.state.user;
+    this.props.history.push('/chat');
+  }
+
 };
-
-
 
 export default Login;
