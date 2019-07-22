@@ -1,1 +1,4 @@
-export default {name: ""}
+export default {
+  id: "",
+  name: ""
+}

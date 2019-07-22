@@ -29,11 +29,25 @@ class Login extends React.Component {
     });
   };
 
-  handleSubmit(){
-    user.name = this.state.user;
-    this.props.history.push('/chat');
-  }
+  async handleSubmit(e){
+    e.preventDefault()
+    try {
+      const res = await fetch('http://localhost:3002/api/users', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          "user": this.state.user
+        })
+      })
+      const data = await res.json();
+      user.id = data._id;
+      user.name = data.user;
+    } catch(err) {
+      console.log(err)
+    }
 
+    this.props.history.push('/chat'); 
+  }
 };
 
 export default Login;

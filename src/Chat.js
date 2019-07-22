@@ -8,6 +8,7 @@ class Chat extends React.Component {
     super(props);
 
     this.state = {
+      loginuser: user.name,
       inputValue: "",
       users: [
         // {id: "",name:""}
@@ -16,6 +17,7 @@ class Chat extends React.Component {
       login: ""
     };
 
+    //this.socket = socketIOClient('http://localhost:3002/');
     this.message = this.message.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
   }
@@ -26,12 +28,12 @@ class Chat extends React.Component {
         <div className="mainbox">
           <aside className="contacts">
             {this.state.users.map(u => {
-              return(
-                <div className="user" /*key={u.id}*/>
+              return( u.name !== this.state.loginuser ? 
+                (<div className="user" key={u.id}>
                   <span className="state"><i className="fa fa-circle" /></span>
                   <p className="name">{u.name}</p>
                   <i className="fa fa-ellipsis-v"></i>
-                </div>
+                </div>) : null
               )
             })}
           </aside>
@@ -51,7 +53,6 @@ class Chat extends React.Component {
                   )
                 })
               }
-              { this.state.login ? <p className='conected'>{this.state.login} connected</p> : null }
             </div>
             <div className="type-zone">
               <input className="send" id="send" value={this.state.inputValue} onKeyPress={this.onSubmit} onChange={this.message}/>
@@ -66,36 +67,32 @@ class Chat extends React.Component {
   componentDidMount() {
     this.getUsers();
     this.getMessages();
-    const socket = socketIOClient('http://localhost:3002/');
-    socket.emit('login', { user: user.name});
-    socket.on('user-connected', (name) => {
+    this.socket = socketIOClient('http://localhost:3002/');
+
+    this.socket.emit('login', { user: user.name});
+
+    this.socket.on('user-connected', (name) => {
       console.log(name.user)
       this.setState({
         login: name.user,
         users: this.state.users.concat({name: name.user})
       })
-    })  
-    // socket.on('user-disconnected', state => {
-    //   $('#chat').append(`<p class='conected'>${state.user} disconnected</p>`);
-    //   $(`#${state.user}`).remove();
-    // });
-    // $('#send').on('keydown', function(e){
-    //   const keycode = (event.keyCode ? event.keyCode : event.which);
-    //   if(keycode == '13'){
-    //     const userLogin = $('#user').text();
-    //     let userMessage = $('#send').val();
-    //     socket.emit('new-message', {message: userMessage, user: '<%= user %>', date: new Date()});
-    //     $('#send').val('');
-    //   }
-    // });
-    // socket.on('new-message', msg => {
-    //   $('#chat').append(`<div class='message'>
-    //   <p class='title'>
-    //     ${msg.user}<span>${msg.date}</span>
-    //   </p>
-    //   <p class='text'>${msg.message}</p>
-    //   </div>`);
-    // });
+    });
+
+    this.socket.on('user-disconnected', state => {
+      const users = this.state.users.filter(u => u.name !== state.user)
+      console.log(users);
+      this.setState({
+        users: users
+      })
+    });
+
+    this.socket.on('new-message', msg => {
+      this.setState({
+        messages: this.state.messages.concat(msg),
+        inputValue:""
+      })
+    });
   }
 
   async getUsers() {
@@ -103,7 +100,7 @@ class Chat extends React.Component {
       const res = await fetch('http://localhost:3002/api/users');
       const data = await res.json();
       const users = this.state.users;
-      const newUsers = await data.map(u => {
+      const newUsers = data.map(u => {
         const newUser = {
           id: u._id,
           name: u.user,
@@ -164,10 +161,7 @@ class Chat extends React.Component {
         body: this.state.inputValue,
         date: this.dateNow()
       }
-      this.setState({
-        messages: this.state.messages.concat(message),
-        inputValue:""
-      })
+      this.socket.emit('new-message', message);
     }
   }
 }
